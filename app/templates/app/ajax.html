@@ -1,0 +1,140 @@
+<script>
+    //prevents page reload
+    $("#btnSave").click(function(e) {
+        e.preventDefault()
+        console.log("save button clicked");
+
+        //getting the value from form
+        let pid =  $("#pro_id").val();
+        let ttl =  $("#titleid").val();
+        let des =  $("#descriptionid").val();
+        let ddl =  $("#deadlineid").val();
+        let csrf = $("input[name=csrfmiddlewaretoken]").val();
+        // making data ready to post to the server
+        mydata = {id:pid, title:ttl, description:des, deadline:ddl, csrfmiddlewaretoken:csrf};
+        console.log(mydata)
+
+        $.ajax({
+            url:"{% url 'save' %}",
+            method: "POST",
+            data: mydata,
+            dataType: "json",
+
+            success: function(data) {
+
+                let title = data.title;
+                let id = data.id
+                let description = data.description;
+                let created_on = data.created_on;
+                let deadline = data.deadline;
+                let all_data = data.all_data;
+                let count_data = all_data.length
+                let _html = ""
+
+                if(data.status == "new_register") {
+                    $('#table_body').empty();
+                    for (var index=0; index<count_data; index++) {
+                        _html = ""
+                        _html += `
+                        <tr>
+                            <td>${all_data[index].id}</td>
+                            <td>${all_data[index].title}</td>
+                            <td>${all_data[index].description}</td>
+                            <td>${all_data[index].created_on}</td>
+                            <td>${all_data[index].deadline}</td>
+                            <td>
+                                <input type="button" data-id="${all_data[index].id}" class="btn btn-warning btn-sm btn-edit" value="Edit">
+                                <input type="button" data-id="${all_data[index].id}" class="btn btn-danger btn-sm btn-del" value="Delete">
+                            </td>   
+                        </tr>
+                        `
+                        $('#table_body').append(_html);
+                        $('form')[0].reset();
+                    }
+                }
+
+                else if(data.status == "updated") {
+                    $('#table_body').empty();
+                    for (var index=0; index<count_data; index++) {
+                        _html = ""
+                        _html += `
+                        <tr>
+                            <td>${all_data[index].id}</td>
+                            <td>${all_data[index].title}</td>
+                            <td>${all_data[index].description}</td>
+                            <td>${all_data[index].created_on}</td>
+                            <td>${all_data[index].deadline}</td>
+                            <td>
+                                <input type="button" data-id="${all_data[index].id}" class="btn btn-warning btn-sm btn-edit" value="Edit">
+                                <input type="button" data-id="${all_data[index].id}" class="btn btn-danger btn-sm btn-del" value="Delete">
+                            </td>   
+                        </tr>
+                        `
+                        $('#table_body').append(_html);
+                        $('form')[0].reset();
+                        $('#pro_id').val('');
+                    }
+
+                }
+
+                else {
+                    console.log('Unable to save form')
+                }
+            }
+        });  
+    });
+
+    //Delete data
+    $('#table_body').on('click', '.btn-del', function() {
+        console.log("delete button clicked");
+        // getting id to delete object
+        let id = $(this).attr("data-id")
+        console.log("deleting id:",id)
+        let csrf = $("input[name=csrfmiddlewaretoken]").val();
+        mydata = {pid:id, csrfmiddlewaretoken:csrf}
+        console.log("sending data:", mydata);
+
+        mythis = this;
+        $.ajax({
+            url: "{% url 'delete' %}",
+            method: "POST",
+            data: mydata,
+            success: function(data) {
+                console.log(data.status)
+                if (data.status == 1) {
+                    //console.log("Data deleted successfully");
+                    $(mythis).closest('tr').fadeOut();
+                }
+                else if (data.status == 0) {
+                    //console.log("Failed to delete data")
+                }
+            }
+        });
+    });
+
+
+    // Edit data
+    $("#table_body").on("click", ".btn-edit", function() {
+        console.log("Edit button clicked");
+        let pid = $(this).attr("data-id")
+        let csrf = $("input[name=csrfmiddlewaretoken]").val();
+        mydata = {pid:pid, csrfmiddlewaretoken:csrf}
+        console.log("sending edited data",mydata);
+
+        $.ajax({
+            url: "{% url 'edit' %}",
+            method: "POST",
+            data: mydata,
+            success: function(data) {
+                //console.log(data);
+                $("#pro_id").val(data.id)
+                $("#titleid").val(data.title)
+                $("#descriptionid").val(data.description)
+                $("#deadlineid").val(data.deadline)
+                
+            }
+        });
+    });
+
+
+</script>
