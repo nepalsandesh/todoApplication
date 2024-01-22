@@ -17,3 +17,5 @@ python manage.py migrate user
 
 # Run the server with the following command
 python manage.py runserver
+
+```
